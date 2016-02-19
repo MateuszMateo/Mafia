@@ -9,8 +9,8 @@
 #include <map>
 #include <set>
 
-#define DEBUG(x) {cout << #x << " = " << x << endl;}
-//#define DEBUG(x) ;
+//#define DEBUG(x) {cout << #x << " = " << x << endl;}
+#define DEBUG(x) ;
 
 using namespace std;
 
@@ -28,13 +28,20 @@ int poczatki_krawedzi[MAX_M + MAX_N + 3];
 int konce_krawedzi[MAX_M + MAX_N + 3];
 
 bool czy_dodane[MAX_N*2]={0,};
+bool dodane_krawedzie[MAX_M+MAX_N*2 + 3]={0,};
 
 deque<int> BFS(int poczatek, int koniec){
-    for(int i=0;i<MAX_N+2;++i) {
+    for(int i=0;i<MAX_N*2;++i) {
         czy_dodane[i] = 0;
     }
+
+    for(int i=0;i<MAX_N*2;++i) {
+        dodane_krawedzie[i] = 0;
+    }
+
     deque<int> kolejka;
     deque<int> wynik;
+    deque<int> krawedzie;
     int poprzednicy[MAX_N*2 +1];
     int poprzednie_krawedzie[MAX_M+MAX_N*2+3];
     kolejka.push_back(poczatek);
@@ -46,17 +53,18 @@ deque<int> BFS(int poczatek, int koniec){
             break;
         }else{
             DEBUG(powiekszona_tablica_poloczen[sprawdzane_miasto].size());
-            for(int i = 0; i < powiekszona_tablica_poloczen[sprawdzane_miasto].size(); ++i){
-                int sprawdzana_krawedz = powiekszona_tablica_poloczen[sprawdzane_miasto][i];
+            for(int i = 0; i < tablica_krawedzi[sprawdzane_miasto].size(); ++i){
+                int sprawdzana_krawedz = tablica_krawedzi[sprawdzane_miasto][i];
                 int sprawdzany_sasiad = konce_krawedzi[sprawdzana_krawedz];
                 DEBUG(sprawdzana_krawedz);
                 DEBUG(sprawdzany_sasiad);
 
                 if(czy_dodane[sprawdzany_sasiad]==false&&wartosci_krawedzi[sprawdzana_krawedz]>0){
-                    cout<<"Dodaje punkt - "<< sprawdzany_sasiad << endl;
+                    //                    cout<<"Dodaje punkt - "<< sprawdzany_sasiad << endl;
                     kolejka.push_back(sprawdzany_sasiad);
                     poprzednicy[sprawdzany_sasiad]=sprawdzane_miasto;
                     poprzednie_krawedzie[sprawdzany_sasiad]=sprawdzana_krawedz;
+                    dodane_krawedzie[sprawdzana_krawedz]=true;
                     czy_dodane[sprawdzany_sasiad]=true;
                 }
             }
@@ -68,6 +76,7 @@ deque<int> BFS(int poczatek, int koniec){
     }else{
         int wytyczna = koniec;
         wynik.push_front(wytyczna);
+        krawedzie.push_front(poprzednie_krawedzie[wytyczna]);
         while(1){
             DEBUG(wytyczna);
             DEBUG(poprzednicy[wytyczna]);
@@ -76,9 +85,10 @@ deque<int> BFS(int poczatek, int koniec){
             }
             wytyczna=poprzednicy[wytyczna];
             wynik.push_front(wytyczna);
+            krawedzie.push_front(poprzednie_krawedzie[wytyczna]);
         }
         wynik.push_front(poczatek);
-        return wynik;
+        return krawedzie;
     }
 }
 
@@ -142,26 +152,46 @@ int main()
     }
 
 
-    for(int i = 0; i < n*2+1; ++i){
-        cout<<"Punkt "<<i<<" posiada "<<tablica_krawedzi[i].size()<<" krawedzi: "<<endl;
-        for(int j = 0; j< tablica_krawedzi[i].size();++j){
-            cout<<" - "<<tablica_krawedzi[i][j]<<" do punktu: "<<konce_krawedzi[tablica_krawedzi[i][j]]<<" przepustowosc: ";
-            if(wartosci_krawedzi[tablica_krawedzi[i][j]]==10000002){
-                cout<<"nieskonczona ( "<<wartosci_krawedzi[tablica_krawedzi[i][j]]<<" )";
-            }else{
-                cout<<wartosci_krawedzi[tablica_krawedzi[i][j]];
+    //    for(int i = 0; i < n*2+1; ++i){
+    //        cout<<"Punkt "<<i<<" posiada "<<tablica_krawedzi[i].size()<<" krawedzi: "<<endl;
+    //        for(int j = 0; j< tablica_krawedzi[i].size();++j){
+    //            cout<<" - "<<tablica_krawedzi[i][j]<<" do punktu: "<<konce_krawedzi[tablica_krawedzi[i][j]]<<" przepustowosc: ";
+    //            if(wartosci_krawedzi[tablica_krawedzi[i][j]]==10000002){
+    //                cout<<"nieskonczona ( "<<wartosci_krawedzi[tablica_krawedzi[i][j]]<<" )";
+    //            }else{
+    //                cout<<wartosci_krawedzi[tablica_krawedzi[i][j]];
+    //            }
+    //            cout<<endl;
+    //        }
+    //    }
+
+    //    cout<<endl<<endl<<"||||||||||||||||||||||||| (^._.^) |||||||||||||||||||||||||"<<endl<<endl;
+
+    while(1){
+        deque<int>trasa = BFS((poczatek-1)*2,(koniec-1)*2 +1);
+        if(trasa[0]==-3){
+            //            cout<<endl<<endl<<"||||||||||||||||||||||||| (^._.^) |||||||||||||||||||||||||"<<endl<<endl;
+            break;
+        }
+        int min_wart_sciezki=10000002;
+        for(int i = 0; i < trasa.size(); ++i){
+            DEBUG(trasa[i]);
+            if(wartosci_krawedzi[trasa[i]]<min_wart_sciezki){
+                min_wart_sciezki=wartosci_krawedzi[trasa[i]];
             }
-            cout<<endl;
+        }
+        //        DEBUG(min_wart_sciezki);
+        //        break;
+        for(int i = 0; i < trasa.size(); ++i){
+            wartosci_krawedzi[trasa[i]]=wartosci_krawedzi[trasa[i]]-min_wart_sciezki;
         }
     }
-    cout<<endl<<endl<<"||||||||||||||||||||||||| (^._.^) |||||||||||||||||||||||||"<<endl<<endl;
 
-    deque<int>pierwsza_trasa = BFS((poczatek-1)*2,(koniec-1)*2 +1);
-
-    for(int i = 0; i<pierwsza_trasa.size(); ++i){
-        cout<< " - punkt "<<pierwsza_trasa[i]<<endl;
+    for(int i = 0; i<n; ++i){
+        if(wartosci_krawedzi[i]==0){
+            cout<<i+1<<" ";
+        }
     }
-
 
 
     return 0;
